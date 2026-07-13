@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from deeptutor.api import main as api_main
 from deeptutor.api.routers import settings as settings_router
@@ -37,9 +37,7 @@ def _seed(svc: ModelCatalogService) -> None:
     svc.save(catalog)
 
 
-def test_get_catalog_has_no_key_but_has_indicators(
-    client, tmp_catalog, monkeypatch
-) -> None:
+def test_get_catalog_has_no_key_but_has_indicators(client, tmp_catalog, monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "sk-live")
     _seed(tmp_catalog)
 
@@ -53,9 +51,7 @@ def test_get_catalog_has_no_key_but_has_indicators(
     assert profile["api_key_env_var"] == "OPENAI_API_KEY"
 
 
-def test_get_catalog_indicator_false_when_env_unset(
-    client, tmp_catalog, monkeypatch
-) -> None:
+def test_get_catalog_indicator_false_when_env_unset(client, tmp_catalog, monkeypatch) -> None:
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     _seed(tmp_catalog)
 

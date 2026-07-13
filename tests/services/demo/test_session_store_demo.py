@@ -13,9 +13,9 @@ from pathlib import Path
 import pytest
 
 import deeptutor.services.demo.rate_limiter as rate_limiter
-import deeptutor.services.session.sqlite_store as sqlite_store
 from deeptutor.services.path_service import PathService
 from deeptutor.services.session import get_session_store
+import deeptutor.services.session.sqlite_store as sqlite_store
 from deeptutor.services.session.sqlite_store import get_sqlite_session_store
 
 

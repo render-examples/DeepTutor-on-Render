@@ -45,9 +45,9 @@ Design
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import os
 import time
-from dataclasses import dataclass
 from typing import Callable
 
 _TRUTHY = {"1", "true", "yes", "on"}
