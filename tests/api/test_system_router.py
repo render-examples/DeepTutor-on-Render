@@ -8,15 +8,11 @@ from deeptutor.api.routers import system as system_router
 
 
 def _stub_status(monkeypatch, *, api_key: str, provider_mode: str = "standard") -> None:
-    monkeypatch.setattr(
-        system_router, "get_current_user", lambda: SimpleNamespace(is_admin=True)
-    )
+    monkeypatch.setattr(system_router, "get_current_user", lambda: SimpleNamespace(is_admin=True))
     monkeypatch.setattr(
         system_router,
         "get_llm_config",
-        lambda: SimpleNamespace(
-            model="gpt-4o-mini", api_key=api_key, provider_mode=provider_mode
-        ),
+        lambda: SimpleNamespace(model="gpt-4o-mini", api_key=api_key, provider_mode=provider_mode),
     )
     monkeypatch.setattr(
         system_router,

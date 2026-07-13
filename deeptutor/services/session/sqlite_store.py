@@ -106,9 +106,7 @@ class SQLiteSessionStore:
             # destroyed the instant no connection is open. The keep-alive
             # connection below stays open for the store's lifetime to pin it.
             # A unique name keeps two in-memory stores from sharing one cache.
-            self.db_path = (
-                f"file:deeptutor-mem-{uuid.uuid4().hex}?mode=memory&cache=shared"
-            )
+            self.db_path = f"file:deeptutor-mem-{uuid.uuid4().hex}?mode=memory&cache=shared"
             self._keepalive = sqlite3.connect(self.db_path, uri=True)
             self._lock = asyncio.Lock()
             self._initialize()
