@@ -1,0 +1,131 @@
+# ============================================================================
+# DeepTutor — Render Blueprint (one-click "Deploy to Render")
+# ============================================================================
+# Deploys the all-in-one DeepTutor image (FastAPI backend + Next.js frontend
+# run together under supervisord) as a single Docker web service backed by a
+# persistent disk at /app/data.
+#
+# SECRETS ARE ENVIRONMENT-ONLY. Every provider API key is declared below with
+# `sync: false`, so Render prompts you for it at deploy time and stores it in
+# its encrypted env-var store. Keys are NEVER written to the persistent disk,
+# NEVER entered in the Settings UI, and NEVER returned to the browser — the UI
+# only shows a "set via environment ✓/✗" indicator per provider.
+#
+# Minimal run: set at least ONE LLM key (e.g. OPENAI_API_KEY) plus the matching
+# embedding key (OPENAI_API_KEY doubles as the OpenAI embedding key). Leave the
+# rest blank. Add a search key (e.g. TAVILY_API_KEY) to enable web search.
+#
+# Deploy-path notes (see README "Deploy to Render"):
+#   * Port: the image serves the Next.js UI on 3782 and the API on 8001 (the UI
+#     proxies /api and /ws to the backend in-process). Confirm the web service
+#     is routing to port 3782 in the Render dashboard after the first deploy.
+#   * This Dockerfile is multi-stage; Render builds the final stage, which is
+#     the lean `production` image (the `deploy` stage inherits from it). No
+#     Docker "Target Stage" override is needed.
+#   * Auth (login) and PocketBase are optional and JSON-driven on disk (the
+#     entrypoint reads data/user/settings/*.json); the password secrets below
+#     are wired via env, but enabling those features needs a one-time edit of
+#     the settings JSON on the mounted disk. See the README.
+# ============================================================================
+
+services:
+  - type: web
+    name: deeptutor
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: standard # 2 GB RAM; RAG indexing/parsing is memory-hungry. Bump if OOM.
+    healthCheckPath: /
+    autoDeploy: false
+    disk:
+      # Non-secret persistent state only: knowledge bases, working dirs, runtime
+      # settings JSON, per-user workspaces, logs. No secret is ever stored here.
+      name: deeptutor-data
+      mountPath: /app/data
+      sizeGB: 10
+    envVars:
+      # --- Non-secret config -------------------------------------------------
+      - key: TZ
+        value: UTC
+
+      # --- Demo mode (per-IP rate limits) -----------------------------------
+      # OFF by default. Set DEMO_MODE=true only on a PUBLIC demo service where
+      # anyone can chat against your key, to cap per-visitor spend. See the
+      # README "Demo mode" section. The two limit overrides are optional
+      # (defaults: 15/min, 200/hour per IP).
+      # - key: DEMO_MODE
+      #   value: "true"
+      # - key: DEMO_RATE_LIMIT_PER_MIN
+      #   value: "15"
+      # - key: DEMO_RATE_LIMIT_PER_HOUR
+      #   value: "200"
+
+      # --- LLM providers (set the ones you use; blank = disabled) -----------
+      # Names come from deeptutor/services/provider_registry.py (env_key +
+      # env_extras). One key covers that provider across LLM/embedding/TTS/etc.
+      - key: OPENAI_API_KEY # OpenAI (LLM + embeddings + TTS/STT + image gen)
+        sync: false
+      - key: ANTHROPIC_API_KEY # Anthropic Claude
+        sync: false
+      - key: GEMINI_API_KEY # Google Gemini
+        sync: false
+      - key: DEEPSEEK_API_KEY # DeepSeek
+        sync: false
+      - key: GROQ_API_KEY # Groq
+        sync: false
+      - key: MISTRAL_API_KEY # Mistral
+        sync: false
+      - key: MOONSHOT_API_KEY # Moonshot / Kimi
+        sync: false
+      - key: DASHSCOPE_API_KEY # Alibaba DashScope / Qwen
+        sync: false
+      - key: MINIMAX_API_KEY # MiniMax
+        sync: false
+      - key: ZAI_API_KEY # Zhipu AI (GLM) — primary
+        sync: false
+      - key: ZHIPUAI_API_KEY # Zhipu AI (GLM) — alias used by some SDKs
+        sync: false
+      - key: STEPFUN_API_KEY # StepFun
+        sync: false
+      - key: XIAOMIMIMO_API_KEY # Xiaomi MiMo
+        sync: false
+      - key: NVIDIA_NIM_API_KEY # NVIDIA NIM
+        sync: false
+      - key: QIANFAN_API_KEY # Baidu Qianfan
+        sync: false
+      - key: OPENROUTER_API_KEY # OpenRouter gateway
+        sync: false
+      - key: AZURE_OPENAI_API_KEY # Azure OpenAI
+        sync: false
+
+      # --- Embedding / rerank providers (non-LLM) ---------------------------
+      - key: COHERE_API_KEY # Cohere embeddings / rerank
+        sync: false
+      - key: JINA_API_KEY # Jina embeddings / rerank
+        sync: false
+
+      # --- Web-search providers ---------------------------------------------
+      - key: TAVILY_API_KEY # Tavily search
+        sync: false
+      - key: BRAVE_API_KEY # Brave search
+        sync: false
+      - key: EXA_API_KEY # Exa search
+        sync: false
+      - key: SERPER_API_KEY # Serper (Google) search
+        sync: false
+      - key: PERPLEXITY_API_KEY # Perplexity search
+        sync: false
+
+      # --- Document parsing / RAG services ----------------------------------
+      - key: MINERU_API_TOKEN # MinerU cloud PDF parsing
+        sync: false
+      - key: PAGEINDEX_API_KEY # PageIndex retrieval pipeline
+        sync: false
+      - key: LIGHTRAG_API_KEY # LightRAG server API key (shared by all LightRAG KBs)
+        sync: false
+
+      # --- Auth / PocketBase (optional; also needs on-disk JSON to enable) --
+      - key: AUTH_PASSWORD_HASH # bcrypt hash for the built-in login (env-only secret)
+        sync: false
+      - key: POCKETBASE_ADMIN_PASSWORD # PocketBase admin password (env-only secret)
+        sync: false
