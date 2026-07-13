@@ -228,18 +228,14 @@ async def test_mineru_settings_roundtrip_redacts_token(
 
 
 @pytest.mark.asyncio
-async def test_mineru_token_is_environment_only(
-    monkeypatch: pytest.MonkeyPatch, tmp_path
-) -> None:
+async def test_mineru_token_is_environment_only(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     service = RuntimeSettingsService(
         tmp_path / "settings", process_env={"MINERU_API_TOKEN": "env-tok"}
     )
     monkeypatch.setattr(settings_router, "get_runtime_settings_service", lambda: service)
 
     # The token always comes from the env var, never from the update request.
-    await settings_router.update_mineru_settings(
-        settings_router.MinerUSettingsUpdate(mode="cloud")
-    )
+    await settings_router.update_mineru_settings(settings_router.MinerUSettingsUpdate(mode="cloud"))
     assert service.load_mineru()["api_token"] == "env-tok"
     # Nothing secret hit the disk.
     assert service.load_mineru(include_process_overrides=False)["api_token"] == ""
@@ -623,9 +619,7 @@ async def test_fetch_models_returns_picker_options(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(factory_module, "fetch_models", _fake_fetch)
 
     response = await settings_router.fetch_models_from_provider(
-        settings_router.FetchModelsPayload(
-            binding="OpenAI", base_url="https://api.example.com/v1"
-        )
+        settings_router.FetchModelsPayload(binding="OpenAI", base_url="https://api.example.com/v1")
     )
 
     assert response == {

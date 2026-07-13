@@ -69,9 +69,7 @@ def test_empty_catalog_llm_key_resolves_openai_from_env(monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "sk-env-real")
     empty = {
         "version": 1,
-        "services": {
-            "llm": {"active_profile_id": None, "active_model_id": None, "profiles": []}
-        },
+        "services": {"llm": {"active_profile_id": None, "active_model_id": None, "profiles": []}},
     }
     cfg = resolve_llm_runtime_config(empty)
     assert cfg.provider_name == "openai"
@@ -84,9 +82,7 @@ def test_empty_catalog_llm_key_never_sentinel_for_openai(monkeypatch) -> None:
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     empty = {
         "version": 1,
-        "services": {
-            "llm": {"active_profile_id": None, "active_model_id": None, "profiles": []}
-        },
+        "services": {"llm": {"active_profile_id": None, "active_model_id": None, "profiles": []}},
     }
     cfg = resolve_llm_runtime_config(empty)
     assert cfg.provider_name == "openai"

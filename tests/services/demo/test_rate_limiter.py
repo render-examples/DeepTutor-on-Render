@@ -28,9 +28,7 @@ class _FakeClock:
 
 
 def _limiter(clock: _FakeClock, *, per_min: int = 3, per_hour: int = 100) -> DemoRateLimiter:
-    return DemoRateLimiter(
-        enabled=True, per_min=per_min, per_hour=per_hour, time_fn=clock
-    )
+    return DemoRateLimiter(enabled=True, per_min=per_min, per_hour=per_hour, time_fn=clock)
 
 
 def test_allows_within_per_minute_then_denies_next():
