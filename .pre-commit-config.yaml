@@ -43,8 +43,9 @@ repos:
     rev: v0.14.7
     hooks:
       - id: ruff
-        # Added --quiet to suppress logs; --exit-zero makes it a "soft fail" if desired
-        args: [--fix, --quiet, --exit-zero]
+        # --fix auto-repairs what it can; without --exit-zero, unfixable lint
+        # errors block the commit, mirroring CI's strict `ruff check .`
+        args: [--fix, --quiet]
 
       - id: ruff-format
         args: [--quiet]
