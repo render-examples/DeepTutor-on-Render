@@ -1,6 +1,6 @@
 # DeepTutor on Render
 
-**One-click deploy of [DeepTutor](https://github.com/HKUDS/DeepTutor) — an agent-native learning workspace — as a single Docker web service, with every provider key kept environment-only.**
+One-click deploy of [DeepTutor](https://github.com/HKUDS/DeepTutor) — an agent-native learning workspace — as a single Docker web service.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/render-examples/DeepTutor-on-Render)
 
