@@ -2011,6 +2011,13 @@ class TurnRuntimeManager:
     @staticmethod
     def _mirror_event_to_workspace(execution: _TurnExecution, payload: dict[str, Any]) -> None:
         """Mirror turn events to task-local ``events.jsonl`` files under ``data/user/workspace``."""
+        from deeptutor.services.demo import is_demo_mode
+
+        # Demo mode: chat history must stay ephemeral. The session store is
+        # already in-memory (see ``get_sqlite_session_store``); skip this
+        # on-disk transcript mirror so the full turn is never written to disk.
+        if is_demo_mode():
+            return
         try:
             path_service = get_path_service()
             task_dir = path_service.get_task_workspace(execution.capability, execution.turn_id)

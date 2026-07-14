@@ -182,6 +182,12 @@ class MemoryStore:
         """Write the chat-mode preference signal. The ``write_memory`` tool
         is the only caller; ``trace_id`` is the current chat turn's L1 id
         injected by runtime."""
+        from deeptutor.services.demo import is_demo_mode
+
+        # Demo mode: persistent memory derived from the chat must stay
+        # ephemeral, so skip writing ``L3/preferences.md`` to disk entirely.
+        if is_demo_mode():
+            return ApplyReport(accepted=False, reason="demo mode: memory not persisted")
         path = paths.l3_file("preferences")
         async with self._lock_for(path):
             doc = (

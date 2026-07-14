@@ -210,3 +210,14 @@ def get_demo_limiter() -> DemoRateLimiter:
     if _limiter is None:
         _limiter = DemoRateLimiter()
     return _limiter
+
+
+def is_demo_mode() -> bool:
+    """True when ``DEMO_MODE`` is enabled.
+
+    Shared guard for the demo's "history stays ephemeral" contract: any code
+    path that would otherwise write conversation-derived state to disk checks
+    this and skips the write. Reuses the process-wide limiter so the answer is
+    consistent everywhere and honours test overrides of ``_limiter``.
+    """
+    return get_demo_limiter().enabled
