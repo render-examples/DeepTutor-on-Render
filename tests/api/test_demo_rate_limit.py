@@ -20,6 +20,7 @@ from starlette.responses import JSONResponse
 from deeptutor.services.demo.rate_limiter import DemoRateLimiter, client_ip
 
 _DEMO_EXEMPT_PREFIXES = ("/api/outputs",)
+_DEMO_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 def _build_app(limiter: DemoRateLimiter) -> FastAPI:
@@ -29,7 +30,11 @@ def _build_app(limiter: DemoRateLimiter) -> FastAPI:
     async def demo_rate_limit(request, call_next):
         if limiter.enabled:
             path = request.url.path
-            if path != "/" and not path.startswith(_DEMO_EXEMPT_PREFIXES):
+            if (
+                request.method not in _DEMO_SAFE_METHODS
+                and path != "/"
+                and not path.startswith(_DEMO_EXEMPT_PREFIXES)
+            ):
                 ip = client_ip(request.headers, request.client.host if request.client else None)
                 decision = limiter.hit(ip)
                 if not decision.allowed:
@@ -48,8 +53,14 @@ def _build_app(limiter: DemoRateLimiter) -> FastAPI:
     async def static_like():
         return {"ok": True}
 
-    @app.get("/api/v1/chat/sessions")
-    async def api_route():
+    # A read-only page-load endpoint: spends no key, must never be counted.
+    @app.get("/api/v1/settings")
+    async def read_route():
+        return {"ok": True}
+
+    # A key-spending endpoint: always POST in the real app, so it is counted.
+    @app.post("/api/v1/co_writer/edit")
+    async def spend_route():
         return {"ok": True}
 
     @app.websocket("/chat")
@@ -79,13 +90,28 @@ def test_http_returns_429_after_limit_with_retry_after():
     limiter = DemoRateLimiter(enabled=True, per_min=2, per_hour=100)
     client = TestClient(_build_app(limiter))
 
-    assert client.get("/api/v1/chat/sessions").status_code == 200
-    assert client.get("/api/v1/chat/sessions").status_code == 200
+    assert client.post("/api/v1/co_writer/edit").status_code == 200
+    assert client.post("/api/v1/co_writer/edit").status_code == 200
 
-    resp = client.get("/api/v1/chat/sessions")
+    resp = client.post("/api/v1/co_writer/edit")
     assert resp.status_code == 429
     assert resp.json()["detail"] == "Rate limit exceeded. Try again shortly."
     assert int(resp.headers["Retry-After"]) > 0
+
+
+def test_read_only_gets_never_counted_regression():
+    """Page-load reads (GET) spend no key and must never trip the limiter.
+
+    Regression: the HTTP catch-all previously counted every method, so a normal
+    SPA page load (several GETs at once) exhausted the per-minute budget and
+    429'd read-only browsing. Only unsafe methods spend the key.
+    """
+    limiter = DemoRateLimiter(enabled=True, per_min=1, per_hour=1)
+    client = TestClient(_build_app(limiter))
+
+    # Far more GETs than the per-minute cap, yet none is ever limited.
+    for _ in range(10):
+        assert client.get("/api/v1/settings").status_code == 200
 
 
 def test_exempt_paths_never_429():
@@ -102,7 +128,7 @@ def test_disabled_never_limits():
     limiter = DemoRateLimiter(enabled=False, per_min=1, per_hour=1)
     client = TestClient(_build_app(limiter))
     for _ in range(10):
-        assert client.get("/api/v1/chat/sessions").status_code == 200
+        assert client.post("/api/v1/co_writer/edit").status_code == 200
 
 
 def test_chat_ws_emits_error_frame_after_limit_socket_stays_open():
