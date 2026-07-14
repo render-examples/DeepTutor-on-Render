@@ -11,6 +11,7 @@
  */
 
 import { wsUrl } from "./api";
+import { getDemoVisitorId } from "./demo-visitor";
 
 // ---- StreamEvent types (mirror Python StreamEventType) ----
 
@@ -184,7 +185,14 @@ export class UnifiedWSClient {
     if (this.ws && this.ws.readyState <= WebSocket.OPEN) return;
     this.intentionalClose = false;
 
-    const url = wsUrl("/api/v1/ws");
+    // Carry the demo visitor id as a query param (WS upgrades can't set
+    // custom headers). Ignored by non-demo backends; keeps demo chat history
+    // isolated per visitor, matching the `X-Demo-Visitor` header on HTTP.
+    const visitorId = getDemoVisitorId();
+    const path = visitorId
+      ? `/api/v1/ws?visitor=${encodeURIComponent(visitorId)}`
+      : "/api/v1/ws";
+    const url = wsUrl(path);
     this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {

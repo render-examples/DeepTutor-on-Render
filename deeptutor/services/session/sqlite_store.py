@@ -106,26 +106,31 @@ class SQLiteSessionStore:
             # destroyed the instant no connection is open. The keep-alive
             # connection below stays open for the store's lifetime to pin it.
             # A unique name keeps two in-memory stores from sharing one cache.
-            self.db_path = f"file:deeptutor-mem-{uuid.uuid4().hex}?mode=memory&cache=shared"
+            # ``db_path`` is a ``file:`` URI here and a filesystem ``Path`` on
+            # the on-disk branch below; both are accepted by ``sqlite3.connect``.
+            self.db_path: str | Path = (
+                f"file:deeptutor-mem-{uuid.uuid4().hex}?mode=memory&cache=shared"
+            )
             self._keepalive = sqlite3.connect(self.db_path, uri=True)
             self._lock = asyncio.Lock()
             self._initialize()
             return
 
         path_service = get_path_service()
-        self.db_path = db_path or path_service.get_chat_history_db()
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._migrate_legacy_db(path_service)
+        disk_path = db_path or path_service.get_chat_history_db()
+        disk_path.parent.mkdir(parents=True, exist_ok=True)
+        self.db_path = disk_path
+        self._migrate_legacy_db(path_service, disk_path)
         self._lock = asyncio.Lock()
         self._initialize()
 
-    def _migrate_legacy_db(self, path_service) -> None:
+    def _migrate_legacy_db(self, path_service, db_path: Path) -> None:
         """Move the legacy ``data/chat_history.db`` into ``data/user/`` once."""
         legacy_path = path_service.project_root / "data" / "chat_history.db"
-        if self.db_path.exists() or not legacy_path.exists() or legacy_path == self.db_path:
+        if db_path.exists() or not legacy_path.exists() or legacy_path == db_path:
             return
         try:
-            os.replace(legacy_path, self.db_path)
+            os.replace(legacy_path, db_path)
         except OSError:
             # Fall back to leaving the legacy DB in place if an OS-level move
             # is not possible; the new DB path will be initialized empty.
@@ -1847,22 +1852,30 @@ class SQLiteSessionStore:
 
 _instances: dict[str, SQLiteSessionStore] = {}
 
-# Stable memoisation key for the demo-mode ephemeral store. Distinct from any
-# real on-disk path so demo and non-demo stores never collide, and fixed so a
-# process reuses one in-memory DB (each ``SQLiteSessionStore(in_memory=True)``
-# otherwise mints a fresh, isolated shared-cache namespace).
+# Memoisation-key prefix for demo-mode ephemeral stores. Distinct from any real
+# on-disk path so demo and non-demo stores never collide. The current visitor
+# id is appended (see ``get_sqlite_session_store``) so each visitor reuses one
+# in-memory DB across requests while staying isolated from other visitors; the
+# bare prefix is the shared bucket for callers with no visitor id.
 _DEMO_INSTANCE_KEY = "__demo_in_memory__"
 
 
 def get_sqlite_session_store() -> SQLiteSessionStore:
     # Demo mode: chat history must stay ephemeral (never written to disk), so
-    # serve a shared in-memory store instead of the on-disk one.
-    from deeptutor.services.demo import get_demo_limiter
+    # serve an in-memory store instead of the on-disk one. It is keyed per
+    # visitor (a client-supplied id in a ContextVar) so concurrent demo
+    # visitors never see each other's history; a visitor with no id shares one
+    # default bucket. Each in-memory store mints a unique ``db_path`` (see
+    # ``SQLiteSessionStore.__init__``), so ``get_turn_runtime_manager`` — which
+    # caches by ``db_path`` — stays isolated per visitor automatically.
+    from deeptutor.services.demo import get_demo_limiter, get_visitor_id
 
     if get_demo_limiter().enabled:
-        if _DEMO_INSTANCE_KEY not in _instances:
-            _instances[_DEMO_INSTANCE_KEY] = SQLiteSessionStore(in_memory=True)
-        return _instances[_DEMO_INSTANCE_KEY]
+        visitor = get_visitor_id()
+        key = f"{_DEMO_INSTANCE_KEY}{visitor}" if visitor else _DEMO_INSTANCE_KEY
+        if key not in _instances:
+            _instances[key] = SQLiteSessionStore(in_memory=True)
+        return _instances[key]
 
     db_path = get_path_service().get_chat_history_db().resolve()
     key = str(db_path)

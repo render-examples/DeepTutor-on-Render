@@ -375,9 +375,16 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 
 # All other routers require a valid session when AUTH_ENABLED=true.
 # require_auth is a no-op when AUTH_ENABLED=false, so this is safe for local use.
-from deeptutor.api.routers.auth import require_admin, require_auth  # noqa: E402
+from deeptutor.api.routers.auth import (  # noqa: E402
+    bind_demo_visitor,
+    require_admin,
+    require_auth,
+)
 
-_auth = [Depends(require_auth)]
+# require_auth installs the current user; bind_demo_visitor partitions the demo
+# session store per visitor (no-op unless DEMO_MODE is on). Both run on every
+# authenticated router below.
+_auth = [Depends(require_auth), Depends(bind_demo_visitor)]
 # Partner data is anchored at the admin workspace (data/partners) and shared
 # process-wide, so management is admin-gated in multi-user deployments
 # (single-user local runs are implicitly admin — no behaviour change there).
