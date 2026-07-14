@@ -36,7 +36,7 @@ services:
     dockerContext: .
     plan: standard # 2 GB RAM; RAG indexing/parsing is memory-hungry. Bump if OOM.
     healthCheckPath: /
-    autoDeploy: false
+    autoDeploy: true
     disk:
       # Non-secret persistent state only: knowledge bases, working dirs, runtime
       # settings JSON, per-user workspaces, logs. No secret is ever stored here.
