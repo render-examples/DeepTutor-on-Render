@@ -123,6 +123,27 @@ async def lifespan(app: FastAPI):
     # Execute on startup
     logger.info("Application startup")
 
+    # Demo-mode diagnostics. The per-visitor / ephemeral-history behaviour is
+    # gated on DEMO_MODE being a parse-truthy value in the *process* env
+    # (1|true|yes|on, case-insensitive, whitespace-trimmed — quotes are NOT
+    # stripped). Historically a mis-set flag (wrong key, quoted value, or wrong
+    # env scope) made all of that silently no-op with nothing in the logs to say
+    # so. Log the raw value and the resolved state so the mismatch is visible.
+    try:
+        import os
+
+        from deeptutor.services.demo import is_demo_mode
+
+        _demo_on = is_demo_mode()
+        logger.info(
+            "DEMO_MODE raw=%r -> demo mode %s; per-visitor ephemeral history %s",
+            os.environ.get("DEMO_MODE"),
+            "ENABLED" if _demo_on else "disabled",
+            "ACTIVE" if _demo_on else "OFF (single shared on-disk store)",
+        )
+    except Exception as e:  # pragma: no cover - diagnostics must never block startup
+        logger.warning(f"Failed to log demo-mode state at startup: {e}")
+
     # Validate configuration consistency
     validate_tool_consistency()
 
