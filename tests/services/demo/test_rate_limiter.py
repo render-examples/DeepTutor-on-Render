@@ -99,26 +99,26 @@ def test_disabled_always_allows():
 
 
 def test_disabled_by_default_when_env_unset(monkeypatch):
-    monkeypatch.delenv("DEMO_MODE", raising=False)
-    limiter = DemoRateLimiter()  # reads env: DEMO_MODE unset -> disabled
+    monkeypatch.delenv("DEMO", raising=False)
+    limiter = DemoRateLimiter()  # reads env: DEMO unset -> disabled
     assert limiter.enabled is False
     assert limiter.hit("ip").allowed
 
 
 @pytest.mark.parametrize("value", ["1", "true", "TRUE", "yes", "on", "On"])
 def test_env_truthy_enables(monkeypatch, value):
-    monkeypatch.setenv("DEMO_MODE", value)
+    monkeypatch.setenv("DEMO", value)
     assert DemoRateLimiter().enabled is True
 
 
 @pytest.mark.parametrize("value", ["0", "false", "no", "off", "", "maybe"])
 def test_env_falsy_disables(monkeypatch, value):
-    monkeypatch.setenv("DEMO_MODE", value)
+    monkeypatch.setenv("DEMO", value)
     assert DemoRateLimiter().enabled is False
 
 
 def test_env_limits_parsed(monkeypatch):
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
     monkeypatch.setenv("DEMO_RATE_LIMIT_PER_MIN", "2")
     monkeypatch.setenv("DEMO_RATE_LIMIT_PER_HOUR", "9")
     clock = _FakeClock()
@@ -129,7 +129,7 @@ def test_env_limits_parsed(monkeypatch):
 
 
 def test_env_bad_limits_fall_back_to_defaults(monkeypatch):
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
     monkeypatch.setenv("DEMO_RATE_LIMIT_PER_MIN", "not-an-int")
     monkeypatch.setenv("DEMO_RATE_LIMIT_PER_HOUR", "-5")
     limiter = DemoRateLimiter(time_fn=_FakeClock())

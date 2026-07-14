@@ -38,7 +38,7 @@ def reset_singletons(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
 
 
 def test_demo_mode_returns_in_memory_store(reset_singletons, monkeypatch):
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
 
     store = get_sqlite_session_store()
 
@@ -49,7 +49,7 @@ def test_demo_mode_returns_in_memory_store(reset_singletons, monkeypatch):
 
 
 def test_demo_mode_off_returns_on_disk_store(reset_singletons, monkeypatch):
-    monkeypatch.delenv("DEMO_MODE", raising=False)
+    monkeypatch.delenv("DEMO", raising=False)
 
     store = get_sqlite_session_store()
 

@@ -283,7 +283,7 @@ app.add_middleware(
 )
 
 
-# Demo-mode per-IP rate limiting. No-op unless DEMO_MODE is truthy, so local and
+# Demo-mode per-IP rate limiting. No-op unless DEMO is truthy, so local and
 # private forks are unaffected. This HTTP catch-all guards REST spenders; the
 # chat WebSocket loops (/chat, /ws) enforce the same limiter per-message, since
 # a WS handshake bypasses http middleware and one socket can send many LLM
@@ -382,7 +382,7 @@ from deeptutor.api.routers.auth import (  # noqa: E402
 )
 
 # require_auth installs the current user; bind_demo_visitor partitions the demo
-# session store per visitor (no-op unless DEMO_MODE is on). Both run on every
+# session store per visitor (no-op unless DEMO is on). Both run on every
 # authenticated router below.
 _auth = [Depends(require_auth), Depends(bind_demo_visitor)]
 # Partner data is anchored at the admin workspace (data/partners) and shared

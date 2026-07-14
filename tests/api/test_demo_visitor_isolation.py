@@ -29,7 +29,7 @@ from deeptutor.services.session.sqlite_store import get_sqlite_session_store
 
 @pytest.fixture
 def demo_client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
     monkeypatch.setattr(rate_limiter, "_limiter", None)
     monkeypatch.setattr(sqlite_store, "_instances", {})
 
@@ -81,7 +81,7 @@ def test_missing_header_does_not_inherit_previous_visitor(demo_client):
 async def test_ws_require_auth_binds_visitor_from_query_param(monkeypatch):
     """The chat WebSocket carries the visitor id as a query param (WS upgrades
     can't set custom headers), and ``ws_require_auth`` must bind it."""
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
     monkeypatch.setattr(rate_limiter, "_limiter", None)
 
     from deeptutor.api.routers.auth import ws_require_auth

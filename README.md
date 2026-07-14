@@ -105,13 +105,13 @@ Each response streams live, so these all make for a quick visual demo without an
 
 ## Demo mode (per-IP rate limits)
 
-If you host a **public demo URL** where anyone can chat against *your* provider key, unbounded use means runaway spend. Demo mode caps per-visitor (per-IP) usage so the demo is safe to leave open. It is **off by default** — local and private forks are unaffected — and only takes effect when you set `DEMO_MODE=true`.
+If you host a **public demo URL** where anyone can chat against *your* provider key, unbounded use means runaway spend. Demo mode caps per-visitor (per-IP) usage so the demo is safe to leave open. It is **off by default** — local and private forks are unaffected — and only takes effect when you set `DEMO=true`.
 
 Set these under the Render **Environment** tab (or your host environment) on the demo service:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DEMO_MODE` | `false` | Master switch. Truthy: `1`, `true`, `yes`, `on` (case-insensitive). |
+| `DEMO` | `false` | Master switch. Truthy: `1`, `true`, `yes`, `on` (case-insensitive). |
 | `DEMO_RATE_LIMIT_PER_MIN` | `15` | Max spending requests per IP per minute. |
 | `DEMO_RATE_LIMIT_PER_HOUR` | `200` | Max spending requests per IP per hour. |
 

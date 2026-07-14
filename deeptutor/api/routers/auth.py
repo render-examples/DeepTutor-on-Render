@@ -268,7 +268,7 @@ async def bind_demo_visitor(
 ) -> None:
     """Bind the per-visitor demo id from the ``X-Demo-Visitor`` header.
 
-    A no-op unless ``DEMO_MODE`` is on, so private deployments are unaffected.
+    A no-op unless ``DEMO`` is on, so private deployments are unaffected.
     In demo mode this partitions the shared in-memory session store per visitor
     (see ``get_sqlite_session_store``) so concurrent visitors don't see each
     other's chat history.

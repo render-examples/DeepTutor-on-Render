@@ -40,7 +40,7 @@ def demo_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
 
 @pytest.mark.asyncio
 async def test_history_isolated_between_visitors(demo_env, monkeypatch):
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
 
     # Visitor A starts a chat.
     token_a = set_visitor_id("visitor-a")
@@ -64,7 +64,7 @@ async def test_history_isolated_between_visitors(demo_env, monkeypatch):
 
 
 def test_same_visitor_reuses_one_store(demo_env, monkeypatch):
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
 
     token = set_visitor_id("visitor-a")
     try:
@@ -74,7 +74,7 @@ def test_same_visitor_reuses_one_store(demo_env, monkeypatch):
 
 
 def test_non_demo_ignores_visitor_id(demo_env, monkeypatch):
-    monkeypatch.delenv("DEMO_MODE", raising=False)
+    monkeypatch.delenv("DEMO", raising=False)
 
     token_a = set_visitor_id("visitor-a")
     store_a = get_sqlite_session_store()
