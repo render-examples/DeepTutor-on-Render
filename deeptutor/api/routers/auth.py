@@ -263,6 +263,27 @@ async def require_auth(
     return payload
 
 
+async def bind_demo_visitor(
+    x_demo_visitor: str | None = Header(default=None, alias="X-Demo-Visitor"),
+) -> None:
+    """Bind the per-visitor demo id from the ``X-Demo-Visitor`` header.
+
+    A no-op unless ``DEMO_MODE`` is on, so private deployments are unaffected.
+    In demo mode this partitions the shared in-memory session store per visitor
+    (see ``get_sqlite_session_store``) so concurrent visitors don't see each
+    other's chat history.
+
+    ``async def`` for the same reason as ``require_auth``: the ContextVar set
+    must run on the event loop to stay visible to the endpoint. HTTP callers
+    ignore the reset token — the request task's context is discarded when it
+    ends. Registered globally via the ``_auth`` dependency list in ``main``.
+    """
+    from deeptutor.services.demo import is_demo_mode, set_visitor_id
+
+    if is_demo_mode():
+        set_visitor_id(x_demo_visitor)
+
+
 class _WsAuthFailed:
     """Sentinel: ws_require_auth failed and closed the WebSocket."""
 
@@ -291,6 +312,16 @@ async def ws_require_auth(ws: WebSocket) -> _CtxToken | _WsAuthFailed:
         finally:
             reset_current_user(user_token)
     """
+    # Demo per-visitor isolation: read the visitor id from the WS query param
+    # (cookies aren't reliably set in the demo's proxy setup, so the client
+    # sends it explicitly). Set before the AUTH_ENABLED branch so it applies
+    # whether or not auth is on. Not reset here — the connection's task context
+    # is discarded when the handler task ends, same as the HTTP path.
+    from deeptutor.services.demo import is_demo_mode, set_visitor_id
+
+    if is_demo_mode():
+        set_visitor_id(ws.query_params.get("visitor"))
+
     if not AUTH_ENABLED:
         return _install_current_user(None)
 

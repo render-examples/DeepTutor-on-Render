@@ -1,3 +1,5 @@
+import { getDemoVisitorId } from "./demo-visitor";
+
 // API configuration and utility functions.
 //
 // The frontend bundle is now URL-agnostic: the browser issues requests against
@@ -79,7 +81,19 @@ export async function apiFetch(
   init?: RequestInit & { skipAuthRedirect?: boolean },
 ): Promise<Response> {
   const { skipAuthRedirect, ...fetchInit } = init ?? {};
-  const res = await fetch(input, { credentials: "include", ...fetchInit });
+
+  // Tag every request with this browser's demo visitor id so the backend can
+  // keep demo chat history private per visitor. Ignored by non-demo backends.
+  // Preserves any headers the caller already set.
+  const visitorId = getDemoVisitorId();
+  const headers = new Headers(fetchInit.headers);
+  if (visitorId) headers.set("X-Demo-Visitor", visitorId);
+
+  const res = await fetch(input, {
+    credentials: "include",
+    ...fetchInit,
+    headers,
+  });
 
   if (
     res.status === 401 &&
