@@ -4,7 +4,7 @@ Gating the session-store factory (see ``test_session_store_demo.py``) makes the
 chat-history DB in-memory, but the turn runtime and the memory subsystem write
 conversation-derived state to disk through other paths. In demo mode those must
 be skipped too, otherwise history is still persisted on disk. Each test below
-pins the culprit write path and asserts it is a no-op when ``DEMO_MODE`` is on
+pins the culprit write path and asserts it is a no-op when ``DEMO`` is on
 and still writes when it is off.
 """
 
@@ -49,7 +49,7 @@ def _execution() -> _TurnExecution:
 
 
 def test_workspace_event_mirror_skipped_in_demo(tmp_paths, monkeypatch):
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
 
     TurnRuntimeManager._mirror_event_to_workspace(
         _execution(), {"type": "assistant", "content": "secret history"}
@@ -60,7 +60,7 @@ def test_workspace_event_mirror_skipped_in_demo(tmp_paths, monkeypatch):
 
 
 def test_workspace_event_mirror_written_when_demo_off(tmp_paths, monkeypatch):
-    monkeypatch.delenv("DEMO_MODE", raising=False)
+    monkeypatch.delenv("DEMO", raising=False)
 
     TurnRuntimeManager._mirror_event_to_workspace(
         _execution(), {"type": "assistant", "content": "kept history"}
@@ -73,7 +73,7 @@ def test_workspace_event_mirror_written_when_demo_off(tmp_paths, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_memory_trace_append_skipped_in_demo(tmp_paths, monkeypatch):
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
 
     await memory_trace.append(
         memory_trace.TraceEvent.new("chat", "preference_stated", {"text": "likes X"})
@@ -85,7 +85,7 @@ async def test_memory_trace_append_skipped_in_demo(tmp_paths, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_memory_trace_append_written_when_demo_off(tmp_paths, monkeypatch):
-    monkeypatch.delenv("DEMO_MODE", raising=False)
+    monkeypatch.delenv("DEMO", raising=False)
 
     await memory_trace.append(
         memory_trace.TraceEvent.new("chat", "preference_stated", {"text": "likes X"})
@@ -97,7 +97,7 @@ async def test_memory_trace_append_written_when_demo_off(tmp_paths, monkeypatch)
 
 @pytest.mark.asyncio
 async def test_write_preference_skipped_in_demo(tmp_paths, monkeypatch):
-    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO", "true")
 
     store = memory_store.MemoryStore()
     report = await store.write_preference(
@@ -112,7 +112,7 @@ async def test_write_preference_skipped_in_demo(tmp_paths, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_write_preference_written_when_demo_off(tmp_paths, monkeypatch):
-    monkeypatch.delenv("DEMO_MODE", raising=False)
+    monkeypatch.delenv("DEMO", raising=False)
 
     store = memory_store.MemoryStore()
     report = await store.write_preference(

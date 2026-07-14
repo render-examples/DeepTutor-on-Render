@@ -17,9 +17,9 @@ loops as well as from an HTTP catch-all middleware.
 
 Configuration (read once from the environment)
 -----------------------------------------------
-* ``DEMO_MODE`` — bool, default ``false``. Truthy values (case-insensitive):
+* ``DEMO`` — bool, default ``false``. Truthy values (case-insensitive):
   ``1``, ``true``, ``yes``, ``on``. **Off by default**, so local and private
-  forks are unaffected; only the public demo service sets ``DEMO_MODE=true``.
+  forks are unaffected; only the public demo service sets ``DEMO=true``.
 * ``DEMO_RATE_LIMIT_PER_MIN`` — int, default ``15``.
 * ``DEMO_RATE_LIMIT_PER_HOUR`` — int, default ``200``.
 
@@ -132,7 +132,7 @@ class DemoRateLimiter:
         per_hour: int | None = None,
         time_fn: Callable[[], float] = time.monotonic,
     ) -> None:
-        self._enabled = _env_bool("DEMO_MODE") if enabled is None else enabled
+        self._enabled = _env_bool("DEMO") if enabled is None else enabled
         self._per_min = _env_int("DEMO_RATE_LIMIT_PER_MIN", 15) if per_min is None else per_min
         self._per_hour = _env_int("DEMO_RATE_LIMIT_PER_HOUR", 200) if per_hour is None else per_hour
         self._time_fn = time_fn
@@ -213,7 +213,7 @@ def get_demo_limiter() -> DemoRateLimiter:
 
 
 def is_demo_mode() -> bool:
-    """True when ``DEMO_MODE`` is enabled.
+    """True when ``DEMO`` is enabled.
 
     Shared guard for the demo's "history stays ephemeral" contract: any code
     path that would otherwise write conversation-derived state to disk checks

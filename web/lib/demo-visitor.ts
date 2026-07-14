@@ -1,6 +1,6 @@
 // Per-visitor id for the public demo.
 //
-// DeepTutor is single-user by design, so in DEMO_MODE the backend serves one
+// DeepTutor is single-user by design, so in DEMO the backend serves one
 // shared in-memory session store to every anonymous visitor. To keep each
 // visitor's chat history private, the browser mints a random id once, persists
 // it in localStorage, and sends it on every request (the `X-Demo-Visitor`

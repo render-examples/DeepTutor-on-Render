@@ -55,7 +55,7 @@ async def unified_websocket(ws: WebSocket) -> None:
     subscription_tasks: dict[str, asyncio.Task[None]] = {}
 
     async def demo_rate_limited() -> bool:
-        """Demo mode: cap per-IP LLM turns. No-op unless DEMO_MODE is set.
+        """Demo mode: cap per-IP LLM turns. No-op unless DEMO is set.
 
         On deny, sends this file's error frame convention and returns True so
         the caller skips starting the turn (the socket stays open).

@@ -49,11 +49,11 @@ services:
         value: UTC
 
       # --- Demo mode (per-IP rate limits) -----------------------------------
-      # OFF by default. Set DEMO_MODE=true only on a PUBLIC demo service where
+      # OFF by default. Set DEMO=true only on a PUBLIC demo service where
       # anyone can chat against your key, to cap per-visitor spend. See the
       # README "Demo mode" section. The two limit overrides are optional
       # (defaults: 15/min, 200/hour per IP).
-      # - key: DEMO_MODE
+      # - key: DEMO
       #   value: "true"
       # - key: DEMO_RATE_LIMIT_PER_MIN
       #   value: "15"

@@ -90,7 +90,7 @@ async def websocket_chat(websocket: WebSocket):
                 await websocket.send_json({"type": "error", "message": "Message is required"})
                 continue
 
-            # Demo mode: cap per-IP LLM turns. No-op unless DEMO_MODE is set.
+            # Demo mode: cap per-IP LLM turns. No-op unless DEMO is set.
             # Reject just this message and keep the socket open.
             limiter = get_demo_limiter()
             if limiter.enabled:
