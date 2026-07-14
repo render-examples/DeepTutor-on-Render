@@ -65,6 +65,12 @@ class TraceEvent:
 
 async def append(event: TraceEvent) -> None:
     """Append one event to today's surface trace file. Never raises."""
+    from deeptutor.services.demo import is_demo_mode
+
+    # Demo mode: conversation-derived signals (queries, stated preferences)
+    # must stay ephemeral, so never write the L1 trace to disk.
+    if is_demo_mode():
+        return
     try:
         path = trace_file(event.surface, datetime.now(tz=timezone.utc).date())
         line = json.dumps(asdict(event), ensure_ascii=False, separators=(",", ":"))
