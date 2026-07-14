@@ -284,12 +284,19 @@ app.add_middleware(
 
 
 # Demo-mode per-IP rate limiting. No-op unless DEMO is truthy, so local and
-# private forks are unaffected. This HTTP catch-all guards REST spenders; the
-# chat WebSocket loops (/chat, /ws) enforce the same limiter per-message, since
-# a WS handshake bypasses http middleware and one socket can send many LLM
-# turns. Health check (/) and the static outputs mount are exempt so the demo
-# keeps loading under active limiting; API routes are NOT exempt.
+# private forks are unaffected. The limiter caps provider-key *spend*, so this
+# HTTP catch-all only counts spending requests: every REST spender (co_writer
+# edit, voice tts/stt, book compile, partners chat, ...) is a POST, so only
+# unsafe methods are counted. Safe, read-only methods (GET/HEAD/OPTIONS) never
+# spend the key and are exempt — otherwise the SPA's page-load reads
+# (/api/v1/settings, /tools, /knowledge/list, ...) would burn the per-minute
+# budget and 429 normal browsing. The chat WebSocket loops (/chat, /ws) enforce
+# the same limiter per-message, since a WS handshake bypasses http middleware
+# and one socket can send many LLM turns. Health check (/) and the static
+# outputs mount are also exempt so the demo keeps loading under active limiting.
 _DEMO_EXEMPT_PREFIXES = ("/api/outputs",)
+# Read-only methods can't spend the provider key, so they never count.
+_DEMO_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 @app.middleware("http")
@@ -299,7 +306,11 @@ async def demo_rate_limit(request, call_next):
     limiter = get_demo_limiter()
     if limiter.enabled:
         path = request.url.path
-        if path != "/" and not path.startswith(_DEMO_EXEMPT_PREFIXES):
+        if (
+            request.method not in _DEMO_SAFE_METHODS
+            and path != "/"
+            and not path.startswith(_DEMO_EXEMPT_PREFIXES)
+        ):
             ip = client_ip(request.headers, request.client.host if request.client else None)
             decision = limiter.hit(ip)
             if not decision.allowed:
